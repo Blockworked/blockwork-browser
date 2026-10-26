@@ -213,19 +213,33 @@ async function onElement(op, args) {
   throw new Error(`only ${seen} element${seen === 1 ? "" : "s"} match ${args.selector}, so there's no match #${nth}`);
 }
 
-function waitForLoad(tabId, timeoutMs) {
-  return new Promise((resolve) => {
-    const done = () => {
-      api.tabs.onUpdated.removeListener(listener);
-      clearTimeout(timer);
-      resolve();
-    };
-    const listener = (id, change) => {
-      if (id === tabId && change.status === "complete") done();
-    };
-    const timer = setTimeout(done, timeoutMs);
-    api.tabs.onUpdated.addListener(listener);
-  });
+// Resolves once the tab has started loading and finished. Listening starts
+// before the navigation, so a fast "loading" isn't missed.
+function loadWatcher(timeoutMs) {
+  const started = new Set();
+  const finished = new Set();
+  let tabId = null;
+  let finish;
+  const done = new Promise((resolve) => (finish = resolve));
+  const listener = (id, change) => {
+    if (change.status === "loading") started.add(id);
+    if (change.status === "complete" && started.has(id)) finished.add(id);
+    if (finished.has(tabId)) stop();
+  };
+  const timer = setTimeout(() => stop(), timeoutMs);
+  function stop() {
+    api.tabs.onUpdated.removeListener(listener);
+    clearTimeout(timer);
+    finish();
+  }
+  api.tabs.onUpdated.addListener(listener);
+  return {
+    watch(id) {
+      tabId = id;
+      if (finished.has(id)) stop();
+      return done;
+    },
+  };
 }
 
 async function run(cmd, args) {
@@ -238,9 +252,10 @@ async function run(cmd, args) {
       let url = String(args.url || "").trim();
       if (!url) throw new Error("give a web address to open");
       if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = "https://" + url;
+      const loaded = loadWatcher(args.wait ?? 30000);
       const tab = args.newTab ? await api.tabs.create({ url, active: true }) : await api.tabs.update((await activeTab()).id, { url });
-      await waitForLoad(tab.id, args.wait ?? 30000);
-      return { url };
+      await loaded.watch(tab.id);
+      return { url: (await api.tabs.get(tab.id)).url || url };
     }
     case "count": {
       const tab = await activeTab();
