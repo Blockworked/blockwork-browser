@@ -1,23 +1,46 @@
+/* Colors and metrics follow Blockwork's own Theme (blockstitch Theme.qml). */
 :root {
-  --bg: #ffffff; --fg: #1d1b26; --muted: #6b6878; --line: #e4e1ec; --accent: #7c5cff; --accent-fg: #fff;
-  --ok: #2e9d5b; --warn: #c98a1b; --bad: #d0443e;
+  --window: #f3f4f6; --panel: #ffffff; --raised: #e9ecf0; --field: #f0f2f5;
+  --border: #aeb5c0; --border-soft: #d7dce3; --text: #202631; --dim: #616b79;
+  --accent: #006fc9; --accent-hover: #005eae; --hover: #dbe1e9;
+  --running: #18743b; --warning: #8a5900; --danger: #c62828;
+  --radius: 6px;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #1d1b26; --fg: #ecebf2; --muted: #a19eb0; --line: #34313f; --accent: #9b84ff; }
+  :root {
+    --window: #1d1e20; --panel: #242527; --raised: #303134; --field: #292a2d;
+    --border: #4a4b50; --border-soft: #36373a; --text: #dedee0; --dim: #96979c;
+    --accent: #1597ff; --accent-hover: #32a5ff; --hover: #3b3c40;
+    --running: #3ccf6e; --warning: #f5b942; --danger: #ff4848;
+  }
 }
 * { box-sizing: border-box; }
-body { margin: 0; width: 300px; padding: 14px; background: var(--bg); color: var(--fg); font: 13px/1.45 system-ui, sans-serif; }
-header { display: flex; align-items: center; gap: 8px; }
-h1 { font-size: 15px; margin: 0; flex: 1; }
-.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
-.dot.connected { background: var(--ok); }
-.dot.waiting, .dot.connecting { background: var(--warn); }
-.dot.denied, .dot.unpaired { background: var(--bad); }
-.state { margin: 10px 0 2px; font-weight: 600; }
-.detail, .hint { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
-button { font: inherit; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 7px; padding: 6px 12px; cursor: pointer; }
-button.primary { width: 100%; background: var(--accent); color: var(--accent-fg); border-color: var(--accent); padding: 8px 12px; margin-bottom: 6px; }
-details { border-top: 1px solid var(--line); padding-top: 8px; }
-summary { cursor: pointer; color: var(--muted); }
-label { display: block; margin: 8px 0; font-size: 12px; color: var(--muted); }
-input { display: block; width: 100%; margin-top: 3px; font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; }
+body { margin: 0; width: 320px; background: var(--window); color: var(--text); font: 13px/1.4 system-ui, sans-serif; }
+header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--panel); border-bottom: 1px solid var(--border-soft); }
+h1 { flex: 1; margin: 0; font-size: 14px; font-weight: 600; }
+.status { display: flex; align-items: center; gap: 6px; color: var(--dim); font-size: 12px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+.dot.connected { background: var(--running); }
+.dot.waiting, .dot.connecting { background: var(--warning); }
+.dot.denied, .dot.unpaired { background: var(--danger); }
+main { padding: 4px 12px 12px; }
+.detail { margin: 10px 0 0; padding: 8px 10px; font-size: 12px; color: var(--dim); background: var(--panel); border: 1px solid var(--border-soft); border-radius: var(--radius); }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.row + .row { border-top: 1px solid var(--border-soft); }
+.text { flex: 1; min-width: 0; }
+h2 { margin: 0 0 2px; font-size: 14px; font-weight: 600; }
+.text p { margin: 0; font-size: 12px; color: var(--dim); }
+details.row { display: block; }
+summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: ""; width: 7px; height: 7px; border: solid var(--dim); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); margin: 0 4px 4px 0; transition: transform 120ms; }
+details[open] summary::after { transform: rotate(-135deg); margin: 4px 4px 0 0; }
+label { display: block; margin: 10px 0 0; font-size: 12px; color: var(--dim); }
+input { display: block; width: 100%; height: 32px; margin-top: 4px; padding: 0 9px; font: inherit; color: var(--text); background: var(--field); border: 1px solid var(--border); border-radius: var(--radius); outline: none; }
+input:focus { border-color: var(--accent); }
+input::placeholder { color: var(--dim); }
+button { height: 32px; padding: 0 14px; font: inherit; color: var(--text); background: var(--raised); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+button:hover { background: var(--hover); }
+button.primary { color: #fff; background: var(--accent); border-color: var(--accent); }
+button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+#save { margin-top: 12px; }

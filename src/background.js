@@ -383,7 +383,7 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
           const note = document.createElement("div");
           note.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647";
           const s = note.attachShadow({ mode: "closed" });
-          s.innerHTML = `<div style="position:fixed;left:50%;top:16px;transform:translateX(-50%);font:12px/1.4 system-ui,sans-serif;color:#fff;background:#1d1b26;border-radius:6px;padding:6px 9px;max-width:480px;pointer-events:auto;user-select:text">${html}</div>`;
+          s.innerHTML = `<div style="position:fixed;left:50%;top:16px;transform:translateX(-50%);font:12px/1.4 system-ui,sans-serif;color:#fff;background:#242527;border-radius:6px;padding:6px 9px;max-width:480px;pointer-events:auto;user-select:text">${html}</div>`;
           document.documentElement.append(note);
           setTimeout(() => note.remove(), 5000);
         };
@@ -396,7 +396,7 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
         area.select();
         const copied = document.execCommand("copy");
         area.remove();
-        const code = `<code style="font:12px ui-monospace,monospace;color:#c9b8ff;word-break:break-all">${esc(selector)}</code>`;
+        const code = `<code style="font:12px ui-monospace,monospace;color:#8cc8ff;word-break:break-all">${esc(selector)}</code>`;
         show(`<b>${copied ? "Copied" : "Selector"}:</b> ${code}`);
         if (!copied) navigator.clipboard?.writeText(selector).catch(() => {});
       },

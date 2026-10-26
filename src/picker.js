@@ -12,10 +12,10 @@
   const shadow = host.attachShadow({ mode: "closed" });
   shadow.innerHTML = `
     <style>
-      .box { position: fixed; border: 2px solid #7c5cff; background: rgba(124,92,255,.15); border-radius: 3px; transition: all 60ms; }
-      .tip, .toast { position: fixed; font: 12px/1.4 system-ui, sans-serif; color: #fff; background: #1d1b26;
+      .box { position: fixed; border: 2px solid #1597ff; background: rgba(21,151,255,.15); border-radius: 3px; transition: all 60ms; }
+      .tip, .toast { position: fixed; font: 12px/1.4 system-ui, sans-serif; color: #fff; background: #242527;
         border-radius: 6px; padding: 6px 9px; max-width: 480px; box-shadow: 0 4px 16px rgba(0,0,0,.3); }
-      .tip code, .toast code { font: 12px ui-monospace, monospace; color: #c9b8ff; word-break: break-all; }
+      .tip code, .toast code { font: 12px ui-monospace, monospace; color: #8cc8ff; word-break: break-all; }
       .toast { left: 50%; top: 16px; transform: translateX(-50%); }
       .hint { opacity: .7 }
     </style>
@@ -90,8 +90,8 @@
     const note = document.createElement("div");
     note.style.cssText = "all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647";
     const s = note.attachShadow({ mode: "closed" });
-    s.innerHTML = `<div style="position:fixed;left:50%;top:16px;transform:translateX(-50%);font:12px/1.4 system-ui,sans-serif;color:#fff;background:#1d1b26;border-radius:6px;padding:6px 9px;max-width:480px">
-      <b>${copied ? "Copied" : "Selector"}:</b> <code style="font:12px ui-monospace,monospace;color:#c9b8ff;word-break:break-all">${escape(selector)}</code></div>`;
+    s.innerHTML = `<div style="position:fixed;left:50%;top:16px;transform:translateX(-50%);font:12px/1.4 system-ui,sans-serif;color:#fff;background:#242527;border-radius:6px;padding:6px 9px;max-width:480px">
+      <b>${copied ? "Copied" : "Selector"}:</b> <code style="font:12px ui-monospace,monospace;color:#8cc8ff;word-break:break-all">${escape(selector)}</code></div>`;
     document.documentElement.append(note);
     setTimeout(() => note.remove(), 3500);
   }

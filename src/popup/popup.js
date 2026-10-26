@@ -2,10 +2,10 @@ const api = globalThis.browser ?? globalThis.chrome;
 
 const STATES = {
   starting: "Starting",
-  unpaired: "Not paired yet",
+  unpaired: "Not paired",
   connecting: "Connecting",
   waiting: "Waiting for Blockwork",
-  connected: "Connected to Blockwork",
+  connected: "Connected",
   denied: "Pairing refused",
 };
 
@@ -14,7 +14,10 @@ const $ = (id) => document.getElementById(id);
 function render(status) {
   $("dot").className = "dot " + status.state;
   $("state").textContent = STATES[status.state] || status.state;
-  $("detail").textContent = status.detail || "";
+  // Only problems get the callout; the pairing row already says what to paste.
+  const problem = status.state === "waiting" || status.state === "denied";
+  $("detail").textContent = problem ? status.detail || "" : "";
+  $("detail").hidden = !problem || !status.detail;
   if (status.state === "unpaired" || status.state === "denied") $("pairing").open = true;
 }
 
@@ -35,6 +38,7 @@ $("pick").addEventListener("click", async () => {
   const res = await api.runtime.sendMessage({ type: "pick" });
   if (res?.error) {
     $("detail").textContent = res.error;
+    $("detail").hidden = false;
     return;
   }
   window.close();
