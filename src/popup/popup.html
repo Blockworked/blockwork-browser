@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon-32.png" alt="" width="20" height="20">
+    <h1>Blockwork</h1>
+    <span id="dot" class="dot"></span>
+  </header>
+  <p id="state" class="state">Starting</p>
+  <p id="detail" class="detail"></p>
+
+  <button id="pick" class="primary">Pick an element</button>
+  <p class="hint">Click something on the page to copy a selector for Blockwork's browser blocks. You can also right-click an element and choose <b>Copy Blockwork selector</b>.</p>
+
+  <details id="pairing">
+    <summary>Pairing</summary>
+    <label>Pairing key
+      <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="From Settings > Integrations in Blockwork">
+    </label>
+    <label>Port
+      <input id="port" type="number" min="1" max="65535" value="8788">
+    </label>
+    <button id="save">Connect</button>
+  </details>
+  <script src="popup.js"></script>
+</body>
+</html>

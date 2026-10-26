@@ -1,0 +1,102 @@
+// Loads dist/chrome into Chromium, pairs it with a fake Blockwork and drives
+// the fixture page through it. `node build.mjs && node test/extension.test.mjs`
+import { chromium } from "playwright";
+import assert from "node:assert/strict";
+import http from "node:http";
+import { readFileSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { fakeBlockwork } from "./fake-blockwork.mjs";
+
+const here = (p) => fileURLToPath(new URL(p, import.meta.url));
+const ext = here("../dist/chrome");
+const key = "test-key-123";
+
+// Pages come from http, since extensions need permission for file:// URLs.
+const page = http.createServer((_, res) => res.writeHead(200, { "content-type": "text/html" }).end(readFileSync(here("fixture.html"))));
+await new Promise((r) => page.listen(0, "127.0.0.1", r));
+const site = `http://127.0.0.1:${page.address().port}/`;
+
+const blockwork = fakeBlockwork({ key });
+const port = await blockwork.listen();
+
+const context = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), "bw-ext-")), {
+  headless: !process.env.HEADED,
+  channel: "chromium",
+  args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`],
+});
+let [worker] = context.serviceWorkers();
+worker ??= await context.waitForEvent("serviceworker");
+
+const tab = await context.newPage();
+await tab.goto(site);
+await tab.bringToFront();
+
+// Pair it the way the popup does.
+await worker.evaluate(async ([port, key]) => {
+  await chrome.storage.local.set({ port, key });
+}, [port, key]);
+await worker.evaluate(() => connect());
+const until = async (test, what) => {
+  const end = Date.now() + 10000;
+  while (!(await test())) {
+    if (Date.now() > end) throw new Error(`timed out: ${what}`);
+    await new Promise((r) => setTimeout(r, 100));
+  }
+};
+await until(() => blockwork.connected() === 1, "the extension pairs");
+
+const log = () => tab.evaluate(() => window.log.splice(0));
+
+const info = await blockwork.request("info");
+assert.equal(info.url, site);
+
+// The screenshot's case, as a "when I type sqrt" macro would run it.
+await tab.focus("[aria-label='second answer']");
+await blockwork.request("click", { selector: "focused >> near=button", nth: 1 });
+await blockwork.request("click", { selector: "text=square root", nth: 1 });
+assert.deepEqual(await log(), ["palette:second answer", "sqrt"]);
+
+await blockwork.request("type", { selector: "[aria-label='first answer']", nth: 1, text: "x^2" });
+assert.deepEqual(await log(), ["input:x^2"]);
+assert.equal((await blockwork.request("read", { selector: ".math", wait: 0 })).value, "x^2");
+assert.equal((await blockwork.request("count", { selector: "button.palette" })).count, 2);
+await assert.rejects(blockwork.request("click", { selector: "text=nowhere", wait: 300 }), /nothing on the page matches text=nowhere/);
+await assert.rejects(blockwork.request("click", { selector: "button.palette", nth: 5, wait: 300 }), /only 2 elements match/);
+assert.equal((await blockwork.request("script", { code: "document.querySelectorAll('button').length" })).value, "7");
+assert.equal((await blockwork.request("script", { code: "const a = 2; return a * 21" })).value, "42");
+
+// Waits for an element that shows up late.
+await tab.evaluate(() => setTimeout(() => document.body.insertAdjacentHTML("beforeend", "<button id=late>Late</button>"), 600));
+await blockwork.request("click", { selector: "#late" });
+
+// Blockwork can ask for a pick: the next click on the page answers it.
+const picking = blockwork.request("pick");
+await tab.waitForFunction(() => globalThis.document.querySelector("div[style*='2147483647']"));
+await tab.mouse.move(1, 1);
+const box = await tab.locator("[aria-label='second answer'] + button").boundingBox();
+await tab.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+assert.equal((await picking).selector, 'input[aria-label="second answer"] >> near=button[title="Symbols"]');
+assert.deepEqual(await log(), [], "the picking click doesn't reach the page");
+
+await blockwork.request("open", { url: site + "?second", newTab: true });
+assert.equal((await blockwork.request("info")).url, site + "?second");
+
+// A key that doesn't match is refused, and the extension says so.
+const stranger = fakeBlockwork({ key: "other" });
+const strangerPort = await stranger.listen();
+await worker.evaluate(async ([port]) => {
+  await chrome.storage.local.set({ port });
+  socket?.close();
+  socket = null;
+  await connect();
+}, [strangerPort]);
+await until(() => worker.evaluate(() => status.state === "denied"), "a wrong key is refused");
+assert.equal(stranger.connected(), 0);
+
+await context.close();
+await blockwork.close();
+await stranger.close();
+page.close();
+console.log("extension: all passed");

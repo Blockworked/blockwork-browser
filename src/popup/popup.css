@@ -1,0 +1,23 @@
+:root {
+  --bg: #ffffff; --fg: #1d1b26; --muted: #6b6878; --line: #e4e1ec; --accent: #7c5cff; --accent-fg: #fff;
+  --ok: #2e9d5b; --warn: #c98a1b; --bad: #d0443e;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1d1b26; --fg: #ecebf2; --muted: #a19eb0; --line: #34313f; --accent: #9b84ff; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; width: 300px; padding: 14px; background: var(--bg); color: var(--fg); font: 13px/1.45 system-ui, sans-serif; }
+header { display: flex; align-items: center; gap: 8px; }
+h1 { font-size: 15px; margin: 0; flex: 1; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.dot.connected { background: var(--ok); }
+.dot.waiting, .dot.connecting { background: var(--warn); }
+.dot.denied, .dot.unpaired { background: var(--bad); }
+.state { margin: 10px 0 2px; font-weight: 600; }
+.detail, .hint { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
+button { font: inherit; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 7px; padding: 6px 12px; cursor: pointer; }
+button.primary { width: 100%; background: var(--accent); color: var(--accent-fg); border-color: var(--accent); padding: 8px 12px; margin-bottom: 6px; }
+details { border-top: 1px solid var(--line); padding-top: 8px; }
+summary { cursor: pointer; color: var(--muted); }
+label { display: block; margin: 8px 0; font-size: 12px; color: var(--muted); }
+input { display: block; width: 100%; margin-top: 3px; font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; }

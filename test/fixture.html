@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<body>
+  <p>The function is concave up on
+    <span class="answer"><input class="math" aria-label="first answer"><button class="palette" title="Symbols">∫π∑∂</button></span>
+    and concave down on
+    <span class="answer"><input class="math" aria-label="second answer"><button class="palette" title="Symbols">∫π∑∂</button></span>.
+  </p>
+  <div id="pad" hidden>
+    <button class="key" aria-label="Square root">√</button>
+    <button class="key"><span>More</span></button>
+  </div>
+  <div class="keypad"><button>More</button></div>
+  <div class="keypad"><button>More</button></div>
+  <button data-testid="save">Save changes</button>
+  <div contenteditable="true" id="editor"></div>
+  <select id="pick"><option value="a">Apple</option><option value="b">Banana</option></select>
+  <div id="host"></div>
+  <script>
+    window.log = [];
+    for (const b of document.querySelectorAll(".palette")) {
+      b.addEventListener("click", () => {
+        log.push("palette:" + b.previousElementSibling.getAttribute("aria-label"));
+        document.getElementById("pad").hidden = false;
+      });
+    }
+    document.querySelector("[aria-label='Square root']").addEventListener("click", () => log.push("sqrt"));
+    document.querySelectorAll(".keypad button").forEach((b, i) => b.addEventListener("click", () => log.push("more" + (i + 1))));
+    document.querySelector(".math").addEventListener("input", (e) => log.push("input:" + e.target.value));
+    const root = document.getElementById("host").attachShadow({ mode: "open" });
+    root.innerHTML = '<button class="inner">Shadow button</button>';
+    root.querySelector("button").addEventListener("click", () => log.push("shadow"));
+  </script>
+</body>
+</html>
