@@ -22,6 +22,14 @@
       <button id="pick" class="primary">Pick</button>
     </section>
 
+    <section id="scriptsRow" class="row" hidden>
+      <div class="text">
+        <h2>Allowed scripts</h2>
+        <p id="scriptsNone">None yet. When a macro first runs a script, you're asked to allow it.</p>
+        <ul id="scripts"></ul>
+      </div>
+    </section>
+
     <details id="pairing" class="row">
       <summary>
         <div class="text">
@@ -38,6 +46,7 @@
       <button id="save" class="primary">Connect</button>
     </details>
   </main>
+  <script src="../target.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

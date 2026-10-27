@@ -64,7 +64,18 @@ assert.equal((await blockwork.request("read", { selector: ".math", wait: 0 })).v
 assert.equal((await blockwork.request("count", { selector: "button.palette" })).count, 2);
 await assert.rejects(blockwork.request("click", { selector: "text=nowhere", wait: 300 }), /nothing on the page matches text=nowhere/);
 await assert.rejects(blockwork.request("click", { selector: "button.palette", nth: 5, wait: 300 }), /only 2 elements match/);
+// Run JavaScript needs the user's "Allow user scripts" switch.
+await assert.rejects(blockwork.request("script", { code: "1 + 1" }), /Allow user scripts/);
+const settings = await context.newPage();
+await settings.goto(`chrome://extensions/?id=${new URL(worker.url()).host}`);
+await settings.click("#allow-user-scripts");
+await settings.close();
+await tab.bringToFront();
+await until(() => worker.evaluate(() => typeof chrome.userScripts?.execute === "function"), "user scripts are allowed");
 assert.equal((await blockwork.request("script", { code: "document.querySelectorAll('button').length" })).value, "7");
+await assert.rejects(blockwork.request("script", { code: "throw new Error('nope')" }), /nope/);
+await assert.rejects(blockwork.request("script", { code: "let = = 1" }), /.+/);
+assert.equal((await blockwork.request("script", { code: "window.log.length >= 0" })).value, "true");
 assert.equal((await blockwork.request("script", { code: "const a = 2; return a * 21" })).value, "42");
 
 // Waits for an element that shows up late.

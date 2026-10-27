@@ -6,10 +6,12 @@
 // is said, so a web page can't pose as the extension and another program on
 // the port can't drive the browser.
 /* global importScripts */
-if (typeof importScripts === "function") importScripts("protocol.js");
+if (typeof importScripts === "function") importScripts("protocol.js", "target.js");
 
 const api = globalThis.browser ?? globalThis.chrome;
-const { hmacHex, randomHex, PROTOCOL } = globalThis.BlockworkProtocol;
+const { hmacHex, randomHex, sha256Hex, PROTOCOL } = globalThis.BlockworkProtocol;
+// Which build this is (build.mjs writes target.js).
+const TARGET = globalThis.BlockworkTarget ?? { browser: "chrome", approveScripts: false };
 
 const DEFAULT_PORT = 8788;
 const KEEPALIVE_MS = 20000;
@@ -88,7 +90,11 @@ async function connect() {
         setStatus("connected", `Blockwork ${msg.version || ""}`.trim());
         sendFocus();
         clearInterval(keepalive);
-        keepalive = setInterval(() => send({ type: "ping" }), KEEPALIVE_MS);
+        keepalive = setInterval(() => {
+          send({ type: "ping" });
+          // An extension API call keeps Firefox's event page from idling out.
+          api.runtime.getPlatformInfo().catch(() => {});
+        }, KEEPALIVE_MS);
       } else if (msg.type === "denied") {
         setStatus("denied", msg.reason || "Blockwork refused the pairing key.");
         ws.close();
@@ -141,8 +147,11 @@ async function handle(msg) {
   }
 }
 
+// The active tab of the last focused normal window, so the approval window
+// (a popup) never counts as the page.
 async function activeTab() {
-  const [tab] = await api.tabs.query({ active: true, lastFocusedWindow: true });
+  const win = await api.windows.getLastFocused({ windowTypes: ["normal"] }).catch(() => null);
+  const [tab] = win ? await api.tabs.query({ active: true, windowId: win.id }) : [];
   if (!tab) throw new Error("the browser has no open tab");
   return tab;
 }
@@ -242,6 +251,80 @@ function loadWatcher(timeoutMs) {
   };
 }
 
+// Run JavaScript goes through the userScripts API, the one the stores allow
+// for code the user writes. Firefox's store only allows it for scripts the
+// user has approved and can see and remove, so that build asks once per script.
+function scriptSource(code, expression) {
+  const body = expression ? `return (${code}\n);` : `${code}\n`;
+  return `(async () => {
+  try {
+    const value = await (async () => { ${body} })();
+    if (value === undefined || value === null) return { value: "" };
+    return { value: typeof value === "object" ? JSON.stringify(value) : String(value) };
+  } catch (e) {
+    return { error: String(e?.message || e) };
+  }
+})();`;
+}
+
+const APPROVAL_WAIT_MS = 110000;
+const approvals = new Map();
+
+async function approvedScripts() {
+  return (await api.storage.local.get("scripts")).scripts || [];
+}
+
+// Resolves once the user allows this exact code, in a window that shows it.
+async function approve(code, url) {
+  const hash = await sha256Hex(code);
+  if ((await approvedScripts()).some((s) => s.hash === hash)) return;
+  const id = randomHex(8);
+  const decided = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => settle(false, "nobody allowed the script in the browser"), APPROVAL_WAIT_MS);
+    const settle = (ok, why) => {
+      clearTimeout(timer);
+      const pending = approvals.get(id);
+      approvals.delete(id);
+      if (pending?.windowId !== undefined && !ok) api.windows.remove(pending.windowId).catch(() => {});
+      ok ? resolve() : reject(new Error(why || "the script was denied in the browser"));
+    };
+    approvals.set(id, { code, url, hash, settle });
+  });
+  const win = await api.windows.create({ url: api.runtime.getURL(`approve/approve.html?id=${id}`), type: "popup", width: 540, height: 600 });
+  const pending = approvals.get(id);
+  if (pending) pending.windowId = win.id;
+  return decided;
+}
+
+api.windows.onRemoved.addListener((windowId) => {
+  for (const pending of approvals.values()) if (pending.windowId === windowId) pending.settle(false);
+});
+
+function userScriptsMissing() {
+  if (TARGET.browser === "firefox") return new Error("Run JavaScript needs permission: allow it in the window the browser shows, or from the extension's menu");
+  return new Error("Run JavaScript needs \"Allow user scripts\" turned on for the Blockwork extension (chrome://extensions, Details), in Chrome 135 or newer");
+}
+
+async function runScript(tab, code) {
+  if (TARGET.approveScripts) await approve(code, tab.url || "");
+  if (typeof api.userScripts?.execute !== "function") throw userScriptsMissing();
+  // An expression gives its value; anything else runs as a function body.
+  for (const expression of [true, false]) {
+    let results;
+    try {
+      results = await api.userScripts.execute({ target: { tabId: tab.id }, world: "MAIN", js: [{ code: scriptSource(code, expression) }] });
+    } catch (e) {
+      throw restricted(tab, e);
+    }
+    // The wrapper always answers an object, so null means it didn't parse.
+    const result = results?.[0]?.result;
+    if (!result) continue;
+    if (result.error) throw new Error(result.error);
+    return result;
+  }
+  throw new Error("the script isn't valid JavaScript");
+}
+
 async function run(cmd, args) {
   switch (cmd) {
     case "info": {
@@ -268,39 +351,8 @@ async function run(cmd, args) {
     case "type":
     case "read":
       return onElement(cmd, args);
-    case "script": {
-      const tab = await activeTab();
-      let results;
-      try {
-        results = await api.scripting.executeScript({
-          target: { tabId: tab.id },
-          world: "MAIN",
-          func: async (code) => {
-            try {
-              let fn;
-              try {
-                fn = new Function(`return (${code}\n)`);
-              } catch {
-                fn = new Function(code);
-              }
-              const value = await fn();
-              if (value === undefined || value === null) return { value: "" };
-              return { value: typeof value === "object" ? JSON.stringify(value) : String(value) };
-            } catch (e) {
-              const csp = /unsafe-eval|Content Security Policy|EvalError/i.test(String(e));
-              return { error: csp ? "this page's security policy blocks scripts from extensions" : String(e?.message || e) };
-            }
-          },
-          args: [String(args.code || "")],
-        });
-      } catch (e) {
-        throw restricted(tab, e);
-      }
-      const result = results[0]?.result;
-      if (!result) throw new Error("the script didn't run");
-      if (result.error) throw new Error(result.error);
-      return result;
-    }
+    case "script":
+      return runScript(await activeTab(), String(args.code || ""));
     case "pick": {
       const tab = await activeTab();
       await startPicker(tab);
@@ -341,6 +393,26 @@ api.runtime.onMessage.addListener((msg, sender, reply) => {
       status = { state: "connecting", detail: "" };
       retryMs = 1000;
       connect();
+      reply({ ok: true });
+    });
+    return true;
+  }
+  if (msg.type === "approval") {
+    const pending = approvals.get(msg.id);
+    reply(pending ? { code: pending.code, url: pending.url } : { gone: true });
+    return false;
+  }
+  if (msg.type === "decide") {
+    const pending = approvals.get(msg.id);
+    if (!pending) return false;
+    if (!msg.allow) {
+      pending.settle(false);
+      return false;
+    }
+    approvedScripts().then(async (scripts) => {
+      scripts.push({ hash: pending.hash, code: pending.code, url: pending.url, approved: Date.now() });
+      await api.storage.local.set({ scripts });
+      pending.settle(true);
       reply({ ok: true });
     });
     return true;

@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Allow this script?</title>
+  <link rel="stylesheet" href="../popup/popup.css">
+  <link rel="stylesheet" href="approve.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon-32.png" alt="" width="18" height="18">
+    <h1>Allow this script?</h1>
+  </header>
+  <main>
+    <p class="lead">A Blockwork macro wants to run this JavaScript on <b id="site"></b>. Once you allow it, the same script runs without asking again. You can remove it later from the extension's menu.</p>
+    <pre id="code"></pre>
+    <p id="note" class="detail" hidden></p>
+    <div class="buttons">
+      <button id="deny">Deny</button>
+      <button id="allow" class="primary">Allow</button>
+    </div>
+  </main>
+  <script src="approve.js"></script>
+</body>
+</html>

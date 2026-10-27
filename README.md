@@ -3,8 +3,7 @@
 Lets [Blockwork](https://github.com/Blockworked/Blockwork) macros act on web
 pages directly: click, type into and read elements by what they are, instead
 of finding them as pictures on screen. Works in Chrome, Edge and other
-Chromium browsers (Manifest V3) and Firefox 128+ (Manifest V2, so the
-connection to Blockwork can stay open).
+Chromium browsers and Firefox 153+, both Manifest V3.
 
 ## Install
 
@@ -35,13 +34,26 @@ In Blockwork's **Browser** category:
 | Block | Does |
 | --- | --- |
 | open [url] in this tab / a new tab | Navigates and waits for the page to load |
-| click element [selector] match [1] | Clicks it, waiting up to 5 s for it to show up |
-| type [text] into element [selector] match [1] | Fills a field the way typing would (inputs, rich text, `<select>`) |
+| click element [selector] (+ which match) | Clicks it, waiting up to 5 s for it to show up |
+| type [text] into element [selector] (+ which match) | Fills a field the way typing would (inputs, rich text, `<select>`) |
 | wait until element [selector] appears / disappears | Polls until it does, with a time limit |
-| set [var] to result of JavaScript [code] | Runs in the page; `document.title` or statements with `return` |
+| set [var] to result of JavaScript [code] | Runs in the page; `document.title` or statements with `return`. See below |
 | page address, page title, text of element, element exists?, number of elements matching, browser connected? | Reporters |
 
 Requests go to the active tab of the browser window focused most recently.
+
+### Run JavaScript
+
+Scripts run through the browser's `userScripts` API, the one the stores allow
+for code the user writes, in the page's own world.
+
+- **Chrome / Edge:** turn on **Allow user scripts** on the extension's Details
+  page in `chrome://extensions` (Chrome 135+).
+- **Firefox:** the first time a macro runs a script, a window shows the code
+  with Allow and Deny (and Firefox asks for the user-scripts permission once).
+  Allowed scripts run without asking again and are listed in the toolbar menu,
+  where they can be removed. A changed script counts as new. This is what
+  AMO's policy asks of `userScripts`.
 
 ## Selectors
 
@@ -87,11 +99,13 @@ every 20 s.
 | `src/background.js` | Connection, handshake, commands, context menu |
 | `src/picker.js` | The point-and-click picker |
 | `src/protocol.js` | HMAC helpers for the handshake |
-| `src/popup/` | Status, pairing and the Pick button |
+| `src/popup/` | Status, pairing, the Pick button and (Firefox) allowed scripts |
+| `src/approve/` | The window that asks to allow a script (Firefox) |
+| `store/` | Store listing text, reviewer notes and images (`node store/shots.mjs`) |
 
 ## Tests
 
 ```bash
 npm install             # Playwright
-npm test                # engine in Chromium, then the built extension against a stand-in Blockwork
+npm test                # engine, the built extension against a stand-in Blockwork, script approvals
 ```

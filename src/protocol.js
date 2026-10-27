@@ -15,5 +15,9 @@
     return hex(crypto.getRandomValues(new Uint8Array(n)));
   }
 
-  globalThis.BlockworkProtocol = { PROTOCOL, hmacHex, randomHex };
+  async function sha256Hex(text) {
+    return hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
+  }
+
+  globalThis.BlockworkProtocol = { PROTOCOL, hmacHex, randomHex, sha256Hex };
 })();

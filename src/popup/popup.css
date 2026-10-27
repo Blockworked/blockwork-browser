@@ -44,3 +44,9 @@ button:hover { background: var(--hover); }
 button.primary { color: #fff; background: var(--accent); border-color: var(--accent); }
 button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 #save { margin-top: 12px; }
+#scriptsRow { display: block; }
+#scriptsRow[hidden] { display: none; }
+#scripts { list-style: none; margin: 8px 0 0; padding: 0; }
+#scripts li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border-soft); }
+#scripts code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px ui-monospace, monospace; color: var(--text); }
+#scripts button { height: 26px; padding: 0 10px; font-size: 12px; }

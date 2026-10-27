@@ -49,3 +49,27 @@ api.runtime.onMessage.addListener((msg) => {
 });
 
 refresh();
+
+// Firefox's build runs only the scripts the user allowed; list them here.
+async function renderScripts() {
+  if (!globalThis.BlockworkTarget?.approveScripts) return;
+  $("scriptsRow").hidden = false;
+  const { scripts = [] } = await api.storage.local.get("scripts");
+  $("scriptsNone").hidden = scripts.length > 0;
+  $("scripts").replaceChildren(...scripts.map((script) => {
+    const item = document.createElement("li");
+    const code = document.createElement("code");
+    code.textContent = script.code.replace(/\s+/g, " ").trim();
+    code.title = script.code;
+    const remove = document.createElement("button");
+    remove.textContent = "Remove";
+    remove.addEventListener("click", async () => {
+      const { scripts: now = [] } = await api.storage.local.get("scripts");
+      await api.storage.local.set({ scripts: now.filter((s) => s.hash !== script.hash) });
+      renderScripts();
+    });
+    item.append(code, remove);
+    return item;
+  }));
+}
+renderScripts();
