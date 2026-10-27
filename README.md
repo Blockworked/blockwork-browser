@@ -7,6 +7,27 @@ Chromium browsers and Firefox 153+, both Manifest V3.
 
 ## Install
 
+With [just](https://just.systems) installed, run `just build` for unpacked
+extensions or `just package` to also create ZIP archives. Run `just` to list
+all recipes. `just deps` installs the development dependencies for tests.
+
+On Linux, `just install` detects your default browser using `xdg-settings`,
+builds the extension, stages it under
+`${XDG_DATA_HOME:-~/.local/share}/blockwork-browser/`, and opens that browser's
+extension manager. In Chromium browsers, enable Developer mode, click **Load
+unpacked**, and select the printed directory. Run `just install` again and
+click **Reload** to update it. `just replace` rebuilds and installs/reinstalls
+using the same staged directory; finish with **Load unpacked** for a new
+installation or **Reload** for an existing one. Firefox installations use **Load Temporary
+Add-on** and last until the browser exits.
+
+`just uninstall` opens the default browser's extension manager; click
+**Remove** on Blockwork to complete removal. It retains staged files and does
+not edit browser profiles. These commands require Python 3, `xdg-settings`,
+and `gio`; browser confirmation is required for installation and removal.
+
+The equivalent Node build commands are:
+
 ```bash
 node build.mjs          # dist/chrome and dist/firefox
 node build.mjs --zip    # also blockwork-chrome-<version>.zip and blockwork-firefox-<version>.zip
@@ -21,11 +42,21 @@ node build.mjs --zip    # also blockwork-chrome-<version>.zip and blockwork-fire
 
 1. In Blockwork, Settings > Integrations, turn on **Browser extension** and
    copy the pairing key.
-2. Click the Blockwork button in the browser's toolbar, open **Pairing**, paste
+2. Click the Blockwork button in the browser's toolbar, open **Connection**, paste
    the key and press Connect. The dot turns green.
 
 The extension connects to `ws://127.0.0.1:8788` (the port is in both places).
 It reconnects by itself when Blockwork starts later.
+
+The popup shows the current page and offers **Pick an element** and **Check a
+selector** (match counts, including frames). Both tools work without a desktop
+connection. The last picked selector is saved locally so you can copy it again;
+it also fills the checker when you reopen the popup on the same page. Picks from
+the right-click menu are saved too.
+
+Once connected, connection settings collapse. Open them to change the key or
+port with **Save changes**; a blank key keeps the saved key. When offline,
+**Reconnect** retries immediately. Browser-owned pages disable the page tools.
 
 ## Blocks
 
@@ -99,7 +130,7 @@ every 20 s.
 | `src/background.js` | Connection, handshake, commands, context menu |
 | `src/picker.js` | The point-and-click picker |
 | `src/protocol.js` | HMAC helpers for the handshake |
-| `src/popup/` | Status, pairing, the Pick button and (Firefox) allowed scripts |
+| `src/popup/` | Connection settings, picker, selector checker, last picked selector and (Firefox) allowed scripts |
 | `src/approve/` | The window that asks to allow a script (Firefox) |
 | `store/` | Store listing text, reviewer notes and images (`node store/shots.mjs`) |
 

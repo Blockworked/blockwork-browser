@@ -1,49 +1,48 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <title>Blockwork</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <header>
-    <img src="../icons/icon-32.png" alt="" width="18" height="18">
+    <img src="../icons/icon-32.png" alt="" width="20" height="20">
     <h1>Blockwork</h1>
-    <span class="status"><span id="dot" class="dot"></span><span id="state">Starting</span></span>
+    <span class="status" role="status"><span id="dot" class="dot"></span><span id="state">Starting</span></span>
   </header>
-
   <main>
-    <p id="detail" class="detail" hidden></p>
-
-    <section class="row">
-      <div class="text">
-        <h2>Pick an element</h2>
-        <p>Click something on the page to copy a selector for the browser blocks. Right-click an element and choose <b>Copy Blockwork selector</b> works too.</p>
-      </div>
-      <button id="pick" class="primary">Pick</button>
+    <p id="detail" class="detail" role="alert" hidden></p>
+    <section class="section">
+      <div class="page"><span class="eyebrow">CURRENT PAGE</span><span id="page-title">Loading…</span></div>
+      <button id="pick" class="primary wide">Pick an element</button>
+      <p id="page-hint" class="hint">Click to copy its selector · Esc to cancel</p>
     </section>
-
-    <section id="scriptsRow" class="row" hidden>
-      <div class="text">
-        <h2>Allowed scripts</h2>
-        <p id="scriptsNone">None yet. When a macro first runs a script, you're asked to allow it.</p>
-        <ul id="scripts"></ul>
+    <section class="section">
+      <h2>Check a selector</h2>
+      <form id="check-form" class="inline">
+        <input id="selector" aria-label="Selector" placeholder="CSS, text=…, focused >> near=…" autocomplete="off" spellcheck="false" required>
+        <button id="check" type="submit">Check</button>
+      </form>
+      <p id="matches" class="hint" role="status">Count matches on this page.</p>
+      <div id="recent" hidden>
+        <div class="inline recent-heading"><h3>Last picked</h3><button id="copy" class="small">Copy</button></div>
+        <code id="last-selector"></code>
       </div>
     </section>
-
-    <details id="pairing" class="row">
-      <summary>
-        <div class="text">
-          <h2>Pairing</h2>
-          <p>Paste the key from Settings &gt; Integrations in Blockwork.</p>
-        </div>
-      </summary>
-      <label>Pairing key
-        <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the pairing key">
-      </label>
-      <label>Port
-        <input id="port" type="number" min="1" max="65535" value="8788">
-      </label>
-      <button id="save" class="primary">Connect</button>
+    <section id="scriptsRow" class="section" hidden>
+      <h2>Allowed scripts</h2>
+      <p id="scriptsNone" class="hint">None yet. Scripts ask for approval on first use.</p>
+      <ul id="scripts"></ul>
+    </section>
+    <details id="pairing" class="section">
+      <summary><h2>Connection</h2><span id="connection-note">Set up</span></summary>
+      <p id="pairing-hint" class="hint">Key from Blockwork → Settings → Integrations.</p>
+      <form id="connection-form">
+        <label>Pairing key<input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste pairing key"></label>
+        <label>Port<input id="port" type="number" min="1" max="65535" value="8788" required></label>
+        <button id="save" type="submit">Connect</button>
+      </form>
     </details>
   </main>
   <script src="../target.js"></script>

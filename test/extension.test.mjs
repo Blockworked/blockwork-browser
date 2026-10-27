@@ -91,6 +91,48 @@ await tab.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 assert.equal((await picking).selector, 'input[aria-label="second answer"] >> near=button[title="Symbols"]');
 assert.deepEqual(await log(), [], "the picking click doesn't reach the page");
 
+// The popup shows useful tools after pairing and preserves a saved key.
+const popup = await context.newPage();
+await tab.bringToFront();
+const extensionId = new URL(worker.url()).host;
+await popup.goto(`chrome-extension://${extensionId}/popup/popup.html`);
+await popup.waitForFunction(() => document.getElementById("state").textContent === "Connected");
+assert.equal(await popup.locator("#pairing").getAttribute("open"), null);
+assert.equal(await popup.locator("#save").textContent(), "Save changes");
+assert.equal(await popup.locator("#save").isDisabled(), true);
+await popup.locator("#pairing summary").click();
+await popup.locator("#port").fill(String(port + 1));
+assert.equal(await popup.locator("#save").isDisabled(), false);
+await popup.locator("#port").fill(String(port));
+assert.equal(await popup.locator("#save").isDisabled(), true);
+await popup.locator("#pairing summary").click();
+assert.equal(await popup.locator("#last-selector").textContent(), 'input[aria-label="second answer"] >> near=button[title="Symbols"]');
+await popup.locator("#selector").fill("button.palette");
+await popup.locator("#check").click();
+await popup.waitForFunction(() => document.getElementById("matches").textContent === "2 matches on this page.");
+await popup.locator("#selector").fill(".no-such-element");
+await popup.locator("#check").click();
+await popup.waitForFunction(() => document.getElementById("matches").textContent === "No matches on this page.");
+await popup.locator("#selector").fill("[");
+await popup.locator("#check").click();
+await popup.waitForFunction(() => !document.getElementById("check").disabled);
+assert.match(await popup.locator("#matches").textContent(), /invalid|selector|syntax/i);
+
+const save = (port, key = "") => popup.evaluate(([port, key]) => chrome.runtime.sendMessage({ type: "saveSettings", port, key }), [port, key]);
+assert.ok((await save(0)).error, "invalid ports are rejected");
+assert.equal((await save(port)).ok, true);
+await until(() => blockwork.connected() === 1, "reconnect with the saved key");
+assert.equal(await worker.evaluate(async () => (await chrome.storage.local.get("key")).key), key);
+
+// A browser-owned page explains why tools are unavailable.
+await popup.bringToFront();
+await popup.reload();
+await popup.waitForFunction(() => document.getElementById("page-hint").textContent.includes("Open a web page"));
+assert.equal(await popup.locator("#pick").isDisabled(), true);
+assert.equal(await popup.locator("#check").isDisabled(), true);
+await popup.close();
+await tab.bringToFront();
+
 await blockwork.request("open", { url: site + "?second", newTab: true });
 assert.equal((await blockwork.request("info")).url, site + "?second");
 

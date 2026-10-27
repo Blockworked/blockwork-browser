@@ -104,7 +104,8 @@ async function connect() {
     if (msg.type === "request") handle(msg);
   };
   ws.onclose = () => {
-    if (socket === ws) socket = null;
+    if (socket !== ws) return;
+    socket = null;
     clearInterval(keepalive);
     if (status.state !== "denied") {
       setStatus("waiting", "Blockwork isn't running, or browser control is off in its Settings > Integrations.");
@@ -341,7 +342,7 @@ async function run(cmd, args) {
       return { url: (await api.tabs.get(tab.id)).url || url };
     }
     case "count": {
-      const tab = await activeTab();
+      const tab = args.tabId === undefined ? await activeTab() : await api.tabs.get(args.tabId);
       const counts = await inFrames(tab, "count", { selector: args.selector });
       const failed = counts.find((r) => r.result.error);
       if (failed) throw new Error(failed.result.error);
@@ -387,14 +388,26 @@ api.runtime.onMessage.addListener((msg, sender, reply) => {
     return true;
   }
   if (msg.type === "saveSettings") {
-    api.storage.local.set({ port: Number(msg.port) || DEFAULT_PORT, key: String(msg.key || "").trim() }).then(() => {
-      socket?.close();
+    (async () => {
+      const previous = await settings();
+      const port = Number(msg.port);
+      if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Use a port from 1 to 65535.");
+      const key = String(msg.key || "").trim() || previous.key;
+      if (!key) throw new Error("Paste a pairing key from Blockwork.");
+      await api.storage.local.set({ port, key });
+      const oldSocket = socket;
       socket = null;
-      status = { state: "connecting", detail: "" };
+      oldSocket?.close();
+      clearInterval(keepalive);
+      setStatus("connecting");
       retryMs = 1000;
-      connect();
+      await connect();
       reply({ ok: true });
-    });
+    })().catch((e) => reply({ error: String(e?.message || e) }));
+    return true;
+  }
+  if (msg.type === "checkSelector") {
+    run("count", { selector: msg.selector, tabId: msg.tabId }).then(reply, (e) => reply({ error: String(e?.message || e) }));
     return true;
   }
   if (msg.type === "approval") {
@@ -418,7 +431,7 @@ api.runtime.onMessage.addListener((msg, sender, reply) => {
     return true;
   }
   if (msg.type === "pick") {
-    activeTab().then(startPicker).then(() => reply({ ok: true }), (e) => reply({ error: String(e?.message || e) }));
+    (msg.tabId === undefined ? activeTab() : api.tabs.get(msg.tabId)).then(startPicker).then(() => reply({ ok: true }), (e) => reply({ error: String(e?.message || e) }));
     return true;
   }
   if (msg.type === "picked") {
@@ -427,7 +440,10 @@ api.runtime.onMessage.addListener((msg, sender, reply) => {
       else pickWaiter.reject(new Error("the pick was cancelled"));
       pickWaiter = null;
     }
-    if (msg.selector) send({ type: "picked", selector: msg.selector, url: msg.url || "" });
+    if (msg.selector) {
+      api.storage.local.set({ lastPicked: { selector: msg.selector, url: msg.url || "" } });
+      send({ type: "picked", selector: msg.selector, url: msg.url || "" });
+    }
   }
   return false;
 });
@@ -448,6 +464,7 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
       func: () => globalThis.BlockworkEngine?.run("selectorFor", {}) ?? { error: "reload the page, then right-click the element again" },
     });
     const result = res?.result || {};
+    if (result.selector) await api.storage.local.set({ lastPicked: { selector: result.selector, url: info.frameUrl || info.pageUrl || tab.url || "" } });
     await api.scripting.executeScript({
       target,
       func: (selector, error) => {
