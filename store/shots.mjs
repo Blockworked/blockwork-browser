@@ -6,6 +6,7 @@ import { mkdirSync, readFileSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fakeBlockwork } from "../test/fake-blockwork.mjs";
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const ext = here("../dist/chrome");
@@ -39,18 +40,51 @@ await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 await page.waitForTimeout(300);
 await page.screenshot({ path: out + "screenshot-picker.png" });
 
-// The popup, shown on a backdrop in both themes.
+// The toolbar popup open over the same page: paired, with the picked
+// selector checked. The popup is drawn as an image where the browser puts it.
+const blockwork = fakeBlockwork({ key: "store-key" });
+const port = await blockwork.listen();
+await worker.evaluate(async ([port, key]) => chrome.storage.local.set({ port, key }), [port, "store-key"]);
+await worker.evaluate(() => connect());
+await page.keyboard.press("Escape");
+const selector = 'input[aria-label="second answer"] >> near=button[title="Symbols"]';
+await worker.evaluate(async ([selector, url]) => chrome.storage.local.set({ lastPicked: { selector, url } }), [selector, page.url()]);
+const tabId = await worker.evaluate(async () => (await activeTab()).id);
 for (const scheme of ["light", "dark"]) {
   const popup = await context.newPage();
   await popup.emulateMedia({ colorScheme: scheme });
+  await popup.setViewportSize({ width: 400, height: 700 });
+  // The popup reads "the current tab"; point that at the demo page.
+  await popup.addInitScript((tabId) => {
+    const query = chrome.tabs.query.bind(chrome.tabs);
+    chrome.tabs.query = async (q) => (q.active ? [await chrome.tabs.get(tabId)] : query(q));
+  }, tabId);
   await popup.goto(`chrome-extension://${id}/popup/popup.html`);
-  await popup.waitForTimeout(500);
-  await popup.addStyleTag({ content: `
-    html { min-height: 100%; background: ${scheme === "dark" ? "#141517" : "#d9dee5"}; }
-    body { margin: 120px auto 0; border-radius: 10px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.35); zoom: 1.4; }` });
-  await popup.screenshot({ path: out + `screenshot-popup-${scheme}.png` });
+  await popup.waitForFunction(() => document.getElementById("state").textContent === "Connected");
+  await popup.click("#check");
+  await popup.waitForFunction(() => /match/.test(document.getElementById("matches").textContent));
+  const box = await popup.evaluate(() => {
+    const r = document.body.getBoundingClientRect();
+    return { width: Math.ceil(r.width), height: Math.ceil(r.height) };
+  });
+  const shot = await popup.screenshot({ clip: { x: 0, y: 0, ...box } });
   await popup.close();
+
+  await page.bringToFront();
+  await page.emulateMedia({ colorScheme: scheme });
+  await page.evaluate(([src, width]) => {
+    document.getElementById("store-popup")?.remove();
+    const img = document.createElement("img");
+    img.id = "store-popup";
+    img.src = src;
+    img.style.cssText = `position:fixed;top:8px;right:16px;width:${width}px;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.35);z-index:2147483647`;
+    document.body.append(img);
+    return new Promise((r) => (img.complete ? r() : (img.onload = r)));
+  }, ["data:image/png;base64," + shot.toString("base64"), box.width]);
+  await page.mouse.move(0, 799);
+  await page.screenshot({ path: out + `screenshot-popup-${scheme}.png` });
 }
+await blockwork.close();
 
 const promo = await context.newPage();
 await promo.setViewportSize({ width: 440, height: 280 });
