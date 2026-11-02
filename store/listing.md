@@ -13,29 +13,34 @@ Blockwork
 
 ## Summary (132 characters at most)
 
-Lets Blockwork macros click, type and read on web pages by element, so they hit the right button even when several look the same.
+Also the manifest's `description`. Pick one:
+
+1. Let your Blockwork macros click, type and read on web pages, aiming at the exact element instead of a spot on screen.
+2. Browser control for Blockwork: macros that click the right button, fill in fields and read pages, by element, not by picture.
+3. Snap together blocks that click, type and read on any web page. Works with the free Blockwork macro app.
 
 ## Description
 
-Blockwork is a free desktop app for building keyboard and mouse macros out of
-blocks. This extension gives its macros a direct line into your browser, so
-they can work with a page by what's on it instead of by pictures of the
-screen:
+Blockwork is powerful, understandable and fun automation: you build macros by
+snapping blocks together, on Windows, macOS and Linux. This extension brings
+those macros into your browser.
 
-- Open a page, click an element, type into a field, wait for something to
-  appear and read text off the page.
-- Pick the right one when a page has several alike: "the Symbols button next
-  to the box I'm typing in" is `focused >> near=button[title="Symbols"]`.
-- Point and click to get a selector: press Pick (or right-click an element and
-  choose Copy Blockwork selector) and paste it into a block.
-- Run your own JavaScript in the page from a macro.
+Macros that work from the screen go by pictures, so when a page has five
+buttons that look the same, they can click the wrong one. With the extension,
+a macro points at the element itself:
 
-The extension talks only to the Blockwork app on your own computer, over a
-local connection paired with a key from Blockwork's Settings > Integrations.
-It has no servers, accounts, analytics or ads, and it does nothing on a page
-until one of your macros asks it to or you use the picker.
+• Click buttons and links, fill in fields and choose from lists
+• Wait for something to appear, then read its text
+• Get the one you mean when several look alike, like the button next to the
+  box you're typing in
+• Click an element to copy its selector, no HTML needed
+• Run your own JavaScript on the page
 
-Needs Blockwork 0.6 or newer: https://blockworked.com
+Private by design: the extension only talks to the Blockwork app on your own
+computer, paired with a key. No accounts, no tracking, and nothing leaves your
+device.
+
+Needs Blockwork 0.6 or newer, free at https://blockworked.com
 
 ## Category
 
