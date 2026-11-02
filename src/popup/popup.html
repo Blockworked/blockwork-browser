@@ -24,7 +24,7 @@
         <input id="selector" aria-label="Selector" placeholder="CSS, text=…, focused >> near=…" autocomplete="off" spellcheck="false" required>
         <button id="check" type="submit">Check</button>
       </form>
-      <p id="matches" class="hint" role="status">Count matches on this page.</p>
+      <p id="matches" class="hint" role="status" hidden></p>
       <div id="recent" hidden>
         <div class="inline recent-heading"><h3>Last picked</h3><button id="copy" class="small">Copy</button></div>
         <code id="last-selector"></code>
@@ -37,7 +37,6 @@
     </section>
     <details id="pairing" class="section">
       <summary><h2>Connection</h2><span id="connection-note">Set up</span></summary>
-      <p id="pairing-hint" class="hint">Key from Blockwork → Settings → Integrations.</p>
       <form id="connection-form">
         <label>Pairing key<input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste pairing key"></label>
         <label>Port<input id="port" type="number" min="1" max="65535" value="8788" required></label>

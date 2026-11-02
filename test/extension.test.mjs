@@ -124,10 +124,10 @@ assert.equal((await save(port)).ok, true);
 await until(() => blockwork.connected() === 1, "reconnect with the saved key");
 assert.equal(await worker.evaluate(async () => (await chrome.storage.local.get("key")).key), key);
 
-// A browser-owned page explains why tools are unavailable.
+// A browser-owned page turns the tools off.
 await popup.bringToFront();
 await popup.reload();
-await popup.waitForFunction(() => document.getElementById("page-hint").textContent.includes("Open a web page"));
+await popup.waitForFunction(() => document.getElementById("page-hint").hidden);
 assert.equal(await popup.locator("#pick").isDisabled(), true);
 assert.equal(await popup.locator("#check").isDisabled(), true);
 await popup.close();

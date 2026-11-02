@@ -68,18 +68,23 @@ $("pick").addEventListener("click", async () => {
   } catch (error) { problem(error.message); }
 });
 
+function matches(text) {
+  $("matches").textContent = text;
+  $("matches").hidden = !text;
+}
+
 $("check-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   $("check").disabled = true;
-  $("matches").textContent = "Checking…";
+  matches("Checking…");
   try {
     const res = await api.runtime.sendMessage({ type: "checkSelector", selector: $("selector").value.trim(), tabId: targetTab });
     if (res?.error) throw new Error(res.error);
-    $("matches").textContent = res.count === 0 ? "No matches on this page." : `${res.count} ${res.count === 1 ? "match" : "matches"} on this page.`;
-  } catch (error) { $("matches").textContent = error.message; }
+    matches(res.count === 0 ? "No matches on this page." : `${res.count} ${res.count === 1 ? "match" : "matches"} on this page.`);
+  } catch (error) { matches(error.message); }
   finally { $("check").disabled = false; }
 });
-$("selector").addEventListener("input", () => { $("matches").textContent = "Count matches on this page."; });
+$("selector").addEventListener("input", () => matches(""));
 
 $("copy").addEventListener("click", async () => {
   try {
@@ -98,7 +103,7 @@ async function loadPage() {
   $("pick").disabled = !allowed;
   $("check").disabled = !allowed;
   $("selector").disabled = !allowed;
-  if (!allowed) $("page-hint").textContent = "Open a web page to use these tools.";
+  $("page-hint").hidden = !allowed;
   const { lastPicked } = await api.storage.local.get("lastPicked");
   if (lastPicked?.selector) {
     $("recent").hidden = false;
