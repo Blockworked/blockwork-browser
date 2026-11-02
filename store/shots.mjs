@@ -28,13 +28,13 @@ let [worker] = context.serviceWorkers();
 worker ??= await context.waitForEvent("serviceworker");
 const id = new URL(worker.url()).host;
 
-// The element picker over a page with two identical symbol buttons.
+// The element picker over a page with several identical Update buttons.
 const page = await context.newPage();
 await page.goto(site);
 await page.bringToFront();
-await page.focus("[aria-label='second answer']");
+await page.focus("[aria-label='Lamp quantity']");
 await worker.evaluate(async () => startPicker(await activeTab()));
-const button = page.locator(".palette").nth(1);
+const button = page.locator(".update").nth(1);
 const box = await button.boundingBox();
 await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 await page.waitForTimeout(300);
@@ -47,7 +47,7 @@ const port = await blockwork.listen();
 await worker.evaluate(async ([port, key]) => chrome.storage.local.set({ port, key }), [port, "store-key"]);
 await worker.evaluate(() => connect());
 await page.keyboard.press("Escape");
-const selector = 'input[aria-label="second answer"] >> near=button[title="Symbols"]';
+const selector = 'input[aria-label="Lamp quantity"] >> near=text="Update"';
 await worker.evaluate(async ([selector, url]) => chrome.storage.local.set({ lastPicked: { selector, url } }), [selector, page.url()]);
 const tabId = await worker.evaluate(async () => (await activeTab()).id);
 for (const scheme of ["light", "dark"]) {
