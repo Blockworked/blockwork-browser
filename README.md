@@ -124,7 +124,7 @@ Then Blockwork sends `{"type":"request","id","cmd","args"}` and the extension
 answers `{"type":"response","id","ok","result"|"error"}`. Commands: `info`,
 `open`, `count`, `click`, `type`, `read`, `script`, `pick`. The extension also
 sends `{"type":"focus","focused"}` when a browser window gains focus, and pings
-every 20 s.
+every 20 s. [PROTOCOL.md](PROTOCOL.md) has every message and command.
 
 | File | |
 | --- | --- |
@@ -139,7 +139,7 @@ every 20 s.
 ## Tests
 
 ```bash
-npm install                     # Playwright
+npm ci                          # Playwright, at the locked version
 npx playwright install chromium # once, the browser the tests drive
 npm test                        # engine, the built extension against a stand-in Blockwork, script approvals
 ```
