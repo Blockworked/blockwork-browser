@@ -33,6 +33,7 @@ nonce. Blockwork gives the handshake 10 seconds.
 | Extension | `{"type":"response","id","ok":true,"result"}` or `{"type":"response","id","ok":false,"error"}` |
 | Extension | `{"type":"focus","focused"}` when a browser window gains or loses focus |
 | Extension | `{"type":"ping"}` every 20 seconds; Blockwork drops a peer silent for a minute |
+| Extension | `{"type":"picked","selector","url"}` when the user picks an element from the extension's own popup or menu. Blockwork ignores it today; a `pick` command's answer comes as its response. |
 
 `error` is a sentence for the run log, such as "nothing on the page matches
 #login".
