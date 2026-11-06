@@ -45,7 +45,9 @@ node build.mjs --zip    # also blockwork-chrome-<version>.zip and blockwork-fire
 2. Click the Blockwork button in the browser's toolbar, open **Connection**, paste
    the key and press Connect. The dot turns green.
 
-The extension connects to `ws://127.0.0.1:8788` (the port is in both places).
+The extension connects to `ws://127.0.0.1:8788`. To change the port, set the
+same number in Blockwork's Integrations settings and the extension's Connection
+panel.
 It reconnects by itself when Blockwork starts later.
 
 The popup shows the current page and offers **Pick an element** and **Check a

@@ -427,7 +427,7 @@ api.runtime.onMessage.addListener((msg, sender, reply) => {
       await api.storage.local.set({ scripts });
       pending.settle(true);
       reply({ ok: true });
-    });
+    }).catch((e) => reply({ error: String(e?.message || e) }));
     return true;
   }
   if (msg.type === "pick") {
