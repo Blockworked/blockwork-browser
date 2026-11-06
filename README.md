@@ -139,6 +139,17 @@ every 20 s.
 ## Tests
 
 ```bash
-npm install             # Playwright
-npm test                # engine, the built extension against a stand-in Blockwork, script approvals
+npm install                     # Playwright
+npx playwright install chromium # once, the browser the tests drive
+npm test                        # engine, the built extension against a stand-in Blockwork, script approvals
 ```
+
+The tests load the Chrome build only; check the Firefox one by hand with
+`npx web-ext lint -s dist/firefox` and a temporary add-on.
+
+## Releasing
+
+1. Bump `version` in `package.json` (the manifests take it from there).
+2. `node build.mjs --zip` makes `blockwork-chrome-<version>.zip` and
+   `blockwork-firefox-<version>.zip`.
+3. Upload them as `store/listing.md` describes.

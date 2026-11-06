@@ -116,5 +116,5 @@ Data collection: the manifest declares `data_collection_permissions: none`.
 
 - Release Blockwork with the browser blocks first, or the listing points at
   something nobody can use yet.
-- Bump `version` in `manifest.base.json` for every upload.
+- Bump `version` in `package.json` for every upload.
 - Chrome's review for `<all_urls>` is a manual one and can take a week or more.

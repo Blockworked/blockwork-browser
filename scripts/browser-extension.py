@@ -39,8 +39,10 @@ def main():
     if args.action == 'install':
         if not args.dry_run:
             subprocess.run(['node', 'build.mjs'], cwd=root, check=True)
-            # Keep the installed path independent of subsequent builds in dist/.
-            shutil.copytree(root / 'dist' / target, destination, dirs_exist_ok=True)
+            # Keep the installed path independent of subsequent builds in dist/,
+            # and drop files the build no longer has.
+            shutil.rmtree(destination, ignore_errors=True)
+            shutil.copytree(root / 'dist' / target, destination)
         if target == 'chrome':
             print('Enable Developer mode, choose Load unpacked, and select the directory above.')
             print('If already loaded, click Reload on the Blockwork extension.')

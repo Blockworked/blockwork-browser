@@ -3,7 +3,9 @@
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
-const base = JSON.parse(readFileSync("manifest.base.json", "utf8"));
+// The version lives in package.json only.
+const { version } = JSON.parse(readFileSync("package.json", "utf8"));
+const base = { ...JSON.parse(readFileSync("manifest.base.json", "utf8")), version };
 const permissions = ["scripting", "tabs", "storage", "alarms", "contextMenus"];
 
 // What background.js and the popup need to know about the build.
