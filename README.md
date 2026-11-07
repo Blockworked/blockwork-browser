@@ -153,3 +153,7 @@ The tests load the Chrome build only; check the Firefox one by hand with
 2. `node build.mjs --zip` makes `blockwork-chrome-<version>.zip` and
    `blockwork-firefox-<version>.zip`.
 3. Upload them as `store/listing.md` describes.
+
+## License
+
+GPL-3.0-or-later. See [LICENSE](LICENSE).
