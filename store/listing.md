@@ -51,7 +51,7 @@ Chrome: Productivity > Workflow & Planning. Edge: Productivity. AMO: Other
 
 - Homepage: https://blockworked.com
 - Support: https://github.com/Blockworked/Blockwork/issues
-- Privacy policy: https://github.com/Blockworked/Blockwork/blob/master/PRIVACY.md
+- Privacy policy: https://blockworked.com/privacy
   (the "Browser extension" section; it's on Blockwork's `browser-store-prep`
   branch until that lands)
 
